@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "Diagnosis": {
+      "title": "Diagnosis",
+      "description": "A patient diagnosis record submitted by a CHV.",
+      "type": "object",
+      "properties": {
+        "patientSummary": { "type": "string", "description": "Brief summary of the patient's condition." },
+        "symptoms": { "type": "array", "items": { "type": "string" }, "description": "List of extracted symptoms." },
+        "suspectedCondition": { "type": "string", "description": "The suspected condition (e.g., Malaria, Pneumonia)." },
+        "urgency": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"], "description": "Triage urgency level." },
+        "district": { "type": "string", "description": "The district where the diagnosis was made." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the diagnosis was recorded." },
+        "chvId": { "type": "string", "description": "The ID of the CHV who made the diagnosis." },
+        "chvEmail": { "type": "string", "description": "The email of the CHV." }
+      },
+      "required": ["patientSummary", "suspectedCondition", "urgency", "district", "timestamp", "chvId"]
+    },
+    "Alert": {
+      "title": "Alert",
+      "description": "An outbreak alert triggered by a cluster of cases.",
+      "type": "object",
+      "properties": {
+        "district": { "type": "string", "description": "The district where the outbreak is detected." },
+        "condition": { "type": "string", "description": "The condition causing the outbreak." },
+        "caseCount": { "type": "number", "description": "Number of cases in the cluster." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the alert was triggered." }
+      },
+      "required": ["district", "condition", "caseCount", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/diagnoses/{diagnosisId}": {
+      "schema": "Diagnosis",
+      "description": "Collection of patient diagnoses."
+    },
+    "/alerts/{alertId}": {
+      "schema": "Alert",
+      "description": "Collection of outbreak alerts."
+    }
+  }
+}

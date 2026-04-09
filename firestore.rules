@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: diagnoses
+    // Fields:
+    //   - patientSummary: string (required)
+    //   - symptoms: list (required)
+    //   - suspectedCondition: string (required)
+    //   - urgency: string (required, LOW|MEDIUM|HIGH)
+    //   - district: string (required)
+    //   - timestamp: timestamp (required)
+    //   - chvId: string (required)
+    //   - chvEmail: string (optional)
+    //
+    // Collection: alerts
+    // Fields:
+    //   - district: string (required)
+    //   - condition: string (required)
+    //   - caseCount: number (required)
+    //   - timestamp: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "archillesjacob2@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidDiagnosis(data) {
+      return data.keys().hasAll(['patientSummary', 'symptoms', 'suspectedCondition', 'urgency', 'district', 'timestamp', 'chvId']) &&
+             data.patientSummary is string && data.patientSummary.size() < 5000 &&
+             data.symptoms is list && data.symptoms.size() < 50 &&
+             data.suspectedCondition is string &&
+             data.urgency in ['LOW', 'MEDIUM', 'HIGH'] &&
+             data.district is string &&
+             data.timestamp is timestamp &&
+             data.chvId == request.auth.uid;
+    }
+
+    function isValidAlert(data) {
+      return data.keys().hasAll(['district', 'condition', 'caseCount', 'timestamp']) &&
+             data.district is string &&
+             data.condition is string &&
+             data.caseCount is number &&
+             data.timestamp is timestamp;
+    }
+
+    match /diagnoses/{diagnosisId} {
+      // CHVs can read their own, Admins can read all
+      allow read: if isAuthenticated() && (resource.data.chvId == request.auth.uid || isAdmin());
+      // Any authenticated user (CHV) can create a diagnosis
+      allow create: if isAuthenticated() && isValidDiagnosis(request.resource.data);
+      // No updates or deletes for now to maintain audit trail
+      allow update, delete: if isAdmin();
+    }
+
+    match /alerts/{alertId} {
+      // All authenticated users can read alerts
+      allow read: if isAuthenticated();
+      // Only admins can create alerts (simulating system trigger)
+      allow create: if isAdmin() && isValidAlert(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /test/connection {
+      allow read: if isAuthenticated();
+    }
+  }
+}

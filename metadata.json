@@ -1,0 +1,5 @@
+{
+  "name": "Vitala",
+  "description": "AI-enabled diagnostic and outbreak alert system for Community Health Volunteers in rural West Africa.",
+  "requestFramePermissions": ["camera", "microphone"]
+}
